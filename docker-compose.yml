@@ -1,0 +1,52 @@
+version: '3'
+
+services:
+
+  app:
+    build: .
+    ports:
+      - '8080:8080'
+    depends_on:
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 12345
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    networks:
+      - backend
+
+  redis:
+    image: redis/redis-stack:latest
+    restart: always
+    ports:
+      - '6379:6379'
+      - '8001:8001'
+    volumes:
+      - redis_storage:/data
+    networks:
+      - backend
+
+  postgres:
+    image: postgres
+    build: .
+    container_name: postgres
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_DB=postgres
+
+    networks:
+      - backend
+    volumes:
+      - ./init_db.sh:/docker-entrypoint-initdb.d/init_db.sh
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  redis_storage:  {}
